@@ -155,11 +155,9 @@ void writeDisplayByCode(bool code, uint8_t data)
 
 void writeExpanderPin(i2cExpanderPin_t pin, bool value)
 {
-	uint8_t position = 0x01 << pin;
-	uint8_t mask = 0xFF ^ position;
 	if(!value)
-		dataExpander &= mask;
+		dataExpander &= ~(0x01 << pin);
 	else
-		dataExpander |= position;
+		dataExpander |= 0x01 << pin;
 	portI2Cwrite(I2C_ADDRESS, &dataExpander, EXPANDER_DATA_SIZE);
 }
