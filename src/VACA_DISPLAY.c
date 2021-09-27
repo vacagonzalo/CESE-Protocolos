@@ -58,6 +58,17 @@ void displayInit()
 	writeExpanderPin(A, 1);
 	portDelay(50);
 
+	// Envío el mismo msg varias veces para verificar el funcionamiento
+	// con el analizador lógico.
+	writeDisplayByCode(RS_INSTRUCTION, FUNCTION_SET
+			| FUNCTION_SET_4BITS);
+	portDelay(1);
+	writeDisplayByCode(RS_INSTRUCTION, FUNCTION_SET
+			| FUNCTION_SET_4BITS);
+	portDelay(1);
+	writeDisplayByCode(RS_INSTRUCTION, FUNCTION_SET
+			| FUNCTION_SET_4BITS);
+	portDelay(1);
 	writeDisplayByCode(RS_INSTRUCTION, FUNCTION_SET
 			| FUNCTION_SET_4BITS);
 	portDelay(1);
