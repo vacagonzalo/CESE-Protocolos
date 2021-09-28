@@ -38,12 +38,29 @@
 #define RW_WRITE 0
 #define RW_READ 1
 
-#define I2C_ADDRESS 78
+// WRITE: 64 66 68 70 72 74 76 78
+#define WRITE_ADDRESS 78
 #define EXPANDER_DATA_SIZE 1
 
 typedef enum {
 	RS, RW, EN, A, D4, D5, D6, D7
 } i2cExpanderPin_t;
+
+typedef struct {
+	uint8_t addr;
+	uint8_t data;
+	bool pin_RS;
+	bool pin_RW;
+	bool pin_EN;
+	bool pin_A;
+	bool pin_D4;
+	bool pin_D5;
+	bool pin_D6;
+	bool pin_D7;
+
+}expander_t;
+
+expander_t expa;
 
 static uint8_t dataExpander = 0x00;
 
@@ -55,23 +72,37 @@ void displayInit()
 {
 	portI2Cinit();
 
+	expa.addr   = WRITE_ADDRESS;
+	expa.data   = 0;
+	expa.pin_RS = 0;
+	expa.pin_RW = 0;
+	expa.pin_EN = 0;
+	expa.pin_A  = 0;
+	expa.pin_D4 = 0;
+	expa.pin_D5 = 0;
+	expa.pin_D6 = 0;
+	expa.pin_D7 = 0;
+
+	///////////////////////////////////////////////////////////////////////////
+	bool initial = 0;
 	writeExpanderPin(A, 1);
 	portDelay(50);
 
-	// Envío el mismo msg varias veces para verificar el funcionamiento
-	// con el analizador lógico.
+	writeDisplayByCode(RS_INSTRUCTION, FUNCTION_SET
+			| FUNCTION_SET_8BITS);
+	portDelay(1);
+	writeDisplayByCode(RS_INSTRUCTION, FUNCTION_SET
+			| FUNCTION_SET_8BITS);
+	portDelay(1);
+	writeDisplayByCode(RS_INSTRUCTION, FUNCTION_SET
+			| FUNCTION_SET_8BITS);
+	portDelay(1);
+
 	writeDisplayByCode(RS_INSTRUCTION, FUNCTION_SET
 			| FUNCTION_SET_4BITS);
 	portDelay(1);
-	writeDisplayByCode(RS_INSTRUCTION, FUNCTION_SET
-			| FUNCTION_SET_4BITS);
-	portDelay(1);
-	writeDisplayByCode(RS_INSTRUCTION, FUNCTION_SET
-			| FUNCTION_SET_4BITS);
-	portDelay(1);
-	writeDisplayByCode(RS_INSTRUCTION, FUNCTION_SET
-			| FUNCTION_SET_4BITS);
-	portDelay(1);
+	initial = 1;
+	///////////////////////////////////////////////////////////////////////////
 
 	writeDisplayByCode(RS_INSTRUCTION, FUNCTION_SET
 			| FUNCTION_SET_4BITS
@@ -107,24 +138,21 @@ void displayCursorPos( uint8_t x, uint8_t y )
 	case 0:
 		writeDisplayByCode(RS_INSTRUCTION, SET_DDRAM_ADDR
 				| (LINE1_FIRST_CHARACTER_ADDRESS + x));
-		portDelay(1);
 		break;
 	case 1:
 		writeDisplayByCode(RS_INSTRUCTION, SET_DDRAM_ADDR
 				| (LINE2_FIRST_CHARACTER_ADDRESS + x));
-		portDelay(1);
 		break;
 	case 2:
 		writeDisplayByCode(RS_INSTRUCTION, SET_DDRAM_ADDR
 				| (LINE3_FIRST_CHARACTER_ADDRESS + x));
-		portDelay(1);
 		break;
 	case 3:
 		writeDisplayByCode(RS_INSTRUCTION, SET_DDRAM_ADDR
 				| (LINE4_FIRST_CHARACTER_ADDRESS + x));
-		portDelay(1);
 		break;
 	}
+	portDelay(1);
 }
 
 void displayWrite( char const * str )
@@ -166,9 +194,26 @@ void writeDisplayByCode(bool code, uint8_t data)
 
 void writeExpanderPin(i2cExpanderPin_t pin, bool value)
 {
-	if(!value)
-		dataExpander &= ~(0x01 << pin);
-	else
-		dataExpander |= 0x01 << pin;
-	portI2Cwrite(I2C_ADDRESS, &dataExpander, EXPANDER_DATA_SIZE);
+	switch(pin)
+	{
+	case RS: expa.pin_RS = value; break;
+	case RW: expa.pin_RW = value; break;
+	case EN: expa.pin_EN = value; break;
+	case  A: expa.pin_A  = value; break;
+	case D4: expa.pin_D4 = value; break;
+	case D5: expa.pin_D5 = value; break;
+	case D6: expa.pin_D6 = value; break;
+	case D7: expa.pin_D7 = value; break;
+	default: break;
+	}
+	expa.data = 0b00000000;
+	if (expa.pin_RS) expa.data |= 0b00000001;
+	if (expa.pin_RW) expa.data |= 0b00000010;
+	if (expa.pin_EN) expa.data |= 0b00000100;
+	if (expa.pin_A ) expa.data |= 0b00001000;
+	if (expa.pin_D4) expa.data |= 0b00010000;
+	if (expa.pin_D5) expa.data |= 0b00100000;
+	if (expa.pin_D6) expa.data |= 0b01000000;
+	if (expa.pin_D7) expa.data |= 0b10000000;
+	portI2Cwrite(expa.addr,&expa.data, 1);
 }

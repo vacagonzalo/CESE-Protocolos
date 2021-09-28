@@ -1,13 +1,14 @@
 #include "VACA_PROT.h"
 #include "sapi.h"
 #include "VACA_DISPLAY.h"
+
 int main( void )
 {
 	boardInit();
 	displayInit();
-	displayCursorPos(0, 0);
-	displayWrite("GONZALO VACA");
+	displayCursorPos( 0, 0 );
 	while( true ) {
+		displayWrite( "Gonzalo Vaca" );
 		gpioToggle(LED1);
 		delay(500);
 	}
