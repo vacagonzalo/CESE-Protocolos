@@ -7,8 +7,8 @@ int main( void )
 	boardInit();
 	displayInit();
 	displayCursorPos( 0, 0 );
+	displayWrite("HITACHI");
 	while( true ) {
-		displayWrite( "Gonzalo Vaca" );
 		gpioToggle(LED1);
 		delay(500);
 	}
