@@ -70,6 +70,12 @@ void writeExpanderPin(i2cExpanderPin_t pin, bool value);
 void writeDisplayByCode(bool code, uint8_t data);
 void writeDisplayData(uint8_t data);
 
+// El HD44780U comienza en modo 8 bits.
+// Los 1ros 4 mensajes de inicialización los tengo que mandar
+// ignorando los 4 bits menos significativos
+void writeDisplayByCode8bitMode(bool code, uint8_t data);
+void writeDisplayData8bitMode(uint8_t data);
+
 void displayInit()
 {
 	portI2Cinit();
@@ -115,19 +121,19 @@ void displayInit()
 	//    Set internal RAM addresses
 	//    Perform data transfer with internal RAM
 	//    Perform miscellaneous functions
-	writeDisplayByCode(RS_INSTRUCTION, FUNCTION_SET
+	writeDisplayByCode8bitMode(RS_INSTRUCTION, FUNCTION_SET
 			| FUNCTION_SET_8BITS);
 	portDelay(5);
 
-	writeDisplayByCode(RS_INSTRUCTION, FUNCTION_SET
+	writeDisplayByCode8bitMode(RS_INSTRUCTION, FUNCTION_SET
 			| FUNCTION_SET_8BITS);
 	portDelay(1);
 
-	writeDisplayByCode(RS_INSTRUCTION, FUNCTION_SET
+	writeDisplayByCode8bitMode(RS_INSTRUCTION, FUNCTION_SET
 			| FUNCTION_SET_8BITS);
 	portDelay(1);
 
-	writeDisplayByCode(RS_INSTRUCTION, FUNCTION_SET
+	writeDisplayByCode8bitMode(RS_INSTRUCTION, FUNCTION_SET
 			| FUNCTION_SET_4BITS);
 	portDelay(1);
 	initial = 1;
@@ -254,4 +260,31 @@ void writeExpanderPin(i2cExpanderPin_t pin, bool value)
 	if (expa.pin_D6) expa.data |= 0b01000000;
 	if (expa.pin_D7) expa.data |= 0b10000000;
 	portI2Cwrite(expa.addr,&expa.data);
+}
+
+void writeDisplayByCode8bitMode(bool code, uint8_t data)
+{
+	// code:
+		// RS_INSTRUCTION 0
+		// RS_DATA 1
+		writeExpanderPin(RS, code); // elijo enviar comando o caracter
+
+		// RW_WRITE 0
+		// RW_READ 1
+		writeExpanderPin(RW, RW_WRITE); // Nunca voy a leer
+		writeDisplayData8bitMode(data);
+
+}
+
+void writeDisplayData8bitMode(uint8_t data)
+{
+	writeExpanderPin(EN, 0);
+	writeExpanderPin(D7, data & 0b10000000);
+	writeExpanderPin(D6, data & 0b01000000);
+	writeExpanderPin(D5, data & 0b00100000);
+	writeExpanderPin(D4, data & 0b00010000);
+	writeExpanderPin(EN, 1);
+	portDelay(5);
+	writeExpanderPin(EN, 0);
+	portDelay(5);
 }
