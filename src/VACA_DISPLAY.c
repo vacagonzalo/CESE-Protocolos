@@ -288,3 +288,10 @@ void writeDisplayData8bitMode(uint8_t data)
 	writeExpanderPin(EN, 0);
 	portDelay(5);
 }
+
+void displayClear()
+{
+	writeDisplayByCode(RS_INSTRUCTION, CLEAR_DISPLAY);
+	portDelay(1);
+
+}
